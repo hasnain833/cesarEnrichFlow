@@ -1,10 +1,10 @@
+import Image from "next/image";
+import logo from "../../public/logo.png";
+
 const footerLinks = {
-  Product: ["Documentation", "Showcase", "Examples", "Pricing"],
-  Packages: ["EnrichFlow", "tw-shimmer", "safe-content-frame"],
+  Product: ["Documentation", "Examples", "Pricing"],
+  Integrations: ["Apollo API", "LeadMagic", "IcyPeas"],
   Company: [
-    "Careers",
-    "Contact Sales",
-    "Blog",
     "Terms of Service",
     "Privacy Policy",
   ],
@@ -13,35 +13,14 @@ const footerLinks = {
 export const Footer = () => {
   return (
     <footer className="border-t border-border py-16 px-4">
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto ">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Logo & Social */}
           <div className="md:col-span-1">
             <a
               href="#"
               className="flex items-center gap-2 text-foreground font-semibold mb-4">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="text-foreground">
-                <path
-                  d="M12 2L2 7v10l10 5 10-5V7L12 2z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 22V12M2 7l10 5 10-5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>EnrichFlow</span>
+              <Image src={logo} alt="Logo" width={24} height={24} />
             </a>
 
             <div className="flex items-center gap-4 mb-6">
@@ -71,7 +50,7 @@ export const Footer = () => {
             </div>
 
             <p className="text-muted-foreground text-sm">
-              © 2025 AgentbaseAI Inc.
+              © 2025 Existantly Inc.
             </p>
           </div>
 

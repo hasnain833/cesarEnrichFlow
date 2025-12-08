@@ -1,17 +1,16 @@
 "use client";
 
-import { Search, Sun, Moon } from "lucide-react";
+import { Search, Sun, Moon, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import logo from "../../public/logo.png";
+import Image from "next/image";
 
 const navLinks = [
   { label: "Docs", href: "#" },
-  { label: "Showcase", href: "#" },
   { label: "Examples", href: "#" },
-  { label: "Dashboard", href: "#" },
-  { label: "Tool UI", href: "#" },
   { label: "Pricing", href: "#" },
 ];
 
@@ -32,28 +31,7 @@ export const Navbar = () => {
           <a
             href="#"
             className="flex items-center gap-2 text-foreground font-semibold">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="text-foreground">
-              <path
-                d="M12 2L2 7v10l10 5 10-5V7L12 2z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 22V12M2 7l10 5 10-5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span>EnrichFlow</span>
+            <Image src={logo} alt="Logo" width={100} height={100} />
           </a>
 
           <nav className="hidden lg:flex items-center gap-1">
@@ -74,16 +52,16 @@ export const Navbar = () => {
             variant="ghost"
             size="sm"
             className="hidden md:flex items-center gap-2 w-100 rounded-full  text-muted-foreground bg-secondary/50 hover:bg-secondary border border-border px-3">
-            <Search className="w-4 h-4 " />
-            <span className="text-sm">Search</span>
-            <div className="flex gap-1">
+            <User className="w-4 h-4 " />
+            <span className="text-sm">My Account</span>
+            {/* <div className="flex gap-1">
               <span className="text-[12px] bg-[#121212] px-1 py-0.5 rounded-lg">
                 CTRL
               </span>
               <span className="text-[12px] bg-[#121212] px-1 py-0.5 rounded-lg">
                 K
               </span>
-            </div>
+            </div>  */}
           </Button>
 
           {mounted && (
