@@ -51,7 +51,7 @@ export const Chat = () => {
                     </a> */}
                     </div>
 
-                    <div className="flex items-end gap-2 align-center">
+                    <div className="flex items-end gap-2 items-center">
                         <Button
                             variant="ghost"
                             size="sm"
