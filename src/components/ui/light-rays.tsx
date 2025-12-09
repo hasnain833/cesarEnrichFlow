@@ -104,7 +104,7 @@ export function LightRays({
     <div
       ref={ref}
       className={cn(
-        "pointer-events-none absolute inset-0 isolate overflow-hidden rounded-[inherit]",
+        "pointer-events-none absolute inset-0 isolate overflow-hidden rounded-[inherit] z-0",
         className
       )}
       style={
