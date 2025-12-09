@@ -11,6 +11,7 @@ node_modules
 *.local
 
 # Next.js
+.env
 .next/
 out/
 build/
