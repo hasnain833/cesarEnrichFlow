@@ -160,7 +160,7 @@ export function ProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-w-[calc(100vw-2rem)] sm:mx-0 mx-4">
         <DialogHeader>
           <DialogTitle>Profile</DialogTitle>
           <DialogDescription>

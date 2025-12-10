@@ -53,31 +53,49 @@ export function APIKeyDialog({
 
     setIsLoadingExisting(true);
     try {
-      // Load from user metadata
-      const apiKeys = user.user_metadata?.api_keys || {};
-      const existingKey = apiKeys[apiName] || "";
+      // Load from Prisma backend
+      const response = await fetch(
+        `/api/integrations/${encodeURIComponent(apiName)}`
+      );
 
-      if (existingKey) {
-        setOriginalKey(existingKey);
-        // Mask the key for display (show only last 4 characters)
-        if (existingKey.length > 4) {
-          const masked =
-            "•".repeat(existingKey.length - 4) + existingKey.slice(-4);
-          setApiKey(masked);
-          setIsMasked(true);
+      if (response.ok) {
+        const data = await response.json();
+        const existingKey = data.apiKey || "";
+
+        if (existingKey) {
+          setOriginalKey(existingKey);
+          // Mask the key for display (show only last 4 characters)
+          if (existingKey.length > 4) {
+            const masked =
+              "•".repeat(existingKey.length - 4) + existingKey.slice(-4);
+            setApiKey(masked);
+            setIsMasked(true);
+          } else {
+            setApiKey(existingKey);
+            setIsMasked(false);
+          }
+          setShowApiKey(false);
         } else {
-          setApiKey(existingKey);
+          setApiKey("");
+          setOriginalKey("");
           setIsMasked(false);
+          setShowApiKey(false);
         }
-        setShowApiKey(false);
-      } else {
+      } else if (response.status === 404) {
+        // No integration found, which is fine
         setApiKey("");
         setOriginalKey("");
         setIsMasked(false);
         setShowApiKey(false);
+      } else {
+        throw new Error("Failed to load API key");
       }
     } catch (error) {
       console.error("Error loading API key:", error);
+      setApiKey("");
+      setOriginalKey("");
+      setIsMasked(false);
+      setShowApiKey(false);
     } finally {
       setIsLoadingExisting(false);
     }
@@ -105,21 +123,26 @@ export function APIKeyDialog({
 
     setIsLoading(true);
     try {
-      // Get existing API keys from metadata
-      const existingApiKeys = user.user_metadata?.api_keys || {};
-
-      // Update API keys
-      const updatedApiKeys = {
-        ...existingApiKeys,
-        [apiName]: apiKey.trim(),
-      };
-
-      // Save to user metadata
-      const { error } = await supabase.auth.updateUser({
-        data: { api_keys: updatedApiKeys },
+      // Save to Prisma backend
+      const response = await fetch("/api/integrations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceName: apiName,
+          apiKey: apiKey.trim(),
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 409) {
+          // Conflict - API key already in use
+          throw new Error(errorData.error || errorData.details || "This API key is already in use by another user");
+        }
+        throw new Error(errorData.error || "Failed to save API key");
+      }
 
       toast.success(`${apiName} API key saved successfully`);
       onSave();
@@ -172,19 +195,18 @@ export function APIKeyDialog({
 
     setIsLoading(true);
     try {
-      // Get existing API keys from metadata
-      const existingApiKeys = user.user_metadata?.api_keys || {};
+      // Remove from Prisma backend
+      const response = await fetch(
+        `/api/integrations?serviceName=${encodeURIComponent(apiName)}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-      // Remove the API key
-      const updatedApiKeys = { ...existingApiKeys };
-      delete updatedApiKeys[apiName];
-
-      // Save to user metadata
-      const { error } = await supabase.auth.updateUser({
-        data: { api_keys: updatedApiKeys },
-      });
-
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to remove API key");
+      }
 
       toast.success(`${apiName} API key removed successfully`);
       onSave();
@@ -202,7 +224,7 @@ export function APIKeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-w-[calc(100vw-2rem)] sm:mx-0 mx-4">
         <DialogHeader>
           <DialogTitle>{apiName} API Key</DialogTitle>
           <DialogDescription>

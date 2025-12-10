@@ -1,28 +1,13 @@
-import { Navbar } from "@/components/Navbar";
-import { AnnouncementBanner } from "@/components/AnnouncementBanner";
-import { HeroSection } from "@/components/HeroSection";
-import { ChatDemo } from "@/components/ChatDemo";
-import { FeaturesSection } from "@/components/FeaturesSection";
-import { LogoCloud } from "@/components/LogoCloud";
-import { TestimonialsSection } from "@/components/TestimonialsSection";
-import { CTASection } from "@/components/CTASection";
-import { Footer } from "@/components/Footer";
+import { Chat } from "@/components/Chat";
+import { LightRays } from "@/components/ui/light-rays";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <AnnouncementBanner />
+    <div className="min-h-screen bg-background relative">
+      <LightRays />
       <main>
-        <HeroSection />
-        <ChatDemo />
-        <FeaturesSection />
-        <LogoCloud />
-        <TestimonialsSection />
-        <CTASection />
+        <Chat />
       </main>
-      <Footer />
     </div>
   );
 }
-

@@ -156,7 +156,7 @@ export function AuthDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-w-[calc(100vw-2rem)] sm:mx-0 mx-4">
         <DialogHeader>
           <DialogTitle>
             {mode === "login" && "Login to your account"}

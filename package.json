@@ -6,10 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "prisma generate --schema=Backend/prisma/schema.prisma",
+    "db:push": "prisma db push --schema=Backend/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema=Backend/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema=Backend/prisma/schema.prisma"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -50,6 +55,7 @@
     "lucide-react": "^0.556.0",
     "motion": "^12.23.25",
     "next-themes": "^0.3.0",
+    "pg": "^8.16.3",
     "prisma": "^7.1.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",

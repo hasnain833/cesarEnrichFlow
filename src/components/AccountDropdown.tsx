@@ -72,10 +72,10 @@ export function AccountDropdown() {
       <Button
         variant="ghost"
         size="sm"
-        className="hidden md:flex items-center gap-2 w-100 rounded-full text-muted-foreground bg-muted/50 hover:bg-accent border border-border px-3"
+        className="flex items-center gap-2 w-100 rounded-full text-muted-foreground bg-muted/50 hover:bg-accent border border-border px-3"
         disabled>
         <User className="w-4 h-4" />
-        <span className="text-sm">Loading...</span>
+        <span className="text-sm hidden sm:inline">Loading...</span>
       </Button>
     );
   }
@@ -87,9 +87,9 @@ export function AccountDropdown() {
           variant="ghost"
           size="sm"
           onClick={() => setIsAuthDialogOpen(true)}
-          className="hidden md:flex items-center gap-2 w-100 rounded-full text-muted-foreground bg-muted/50 hover:bg-accent border border-border px-3">
+          className="flex items-center gap-2 w-100 rounded-full text-muted-foreground bg-muted/50 hover:bg-accent border border-border px-3">
           <User className="w-4 h-4" />
-          <span className="text-sm">Login / Signup</span>
+          <span className="text-sm hidden sm:inline">Login / Signup</span>
         </Button>
         <AuthDialog
           open={isAuthDialogOpen}
@@ -107,9 +107,9 @@ export function AccountDropdown() {
           <Button
             variant="ghost"
             size="sm"
-            className="hidden md:flex items-center gap-2 w-100 rounded-full text-muted-foreground bg-muted/50 hover:bg-accent border border-border px-3">
+            className="flex items-center gap-2 w-100 rounded-full text-muted-foreground bg-muted/50 hover:bg-accent border border-border px-3">
             <User className="w-4 h-4" />
-            <span className="text-sm">
+            <span className="text-sm hidden sm:inline">
               {user.user_metadata?.first_name ||
                 user.email?.split("@")[0] ||
                 "My Account"}
