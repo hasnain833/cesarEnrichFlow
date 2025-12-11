@@ -102,6 +102,9 @@ export function AuthDialog({
   const onSignup = async (data: SignupFormData) => {
     setIsLoading(true);
     try {
+      // Get the base URL from environment variable or fall back to current origin
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -109,6 +112,7 @@ export function AuthDialog({
           data: {
             first_name: data.firstName,
           },
+          emailRedirectTo: `${baseUrl}/auth/callback`,
         },
       });
 
@@ -139,8 +143,11 @@ export function AuthDialog({
 
     setIsLoading(true);
     try {
+      // Get the base URL from environment variable or fall back to current origin
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${baseUrl}/auth/reset-password`,
       });
 
       if (error) throw error;
