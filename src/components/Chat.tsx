@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Plus, ArrowUp, Share, Sun, Moon, Check, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Ripple } from "@/components/ui/ripple";
@@ -49,11 +50,41 @@ export const Chat = () => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle email verification errors
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const reason = searchParams.get('reason');
+    
+    if (error === 'email_verification_failed') {
+      let message = 'Email verification failed. ';
+      
+      if (reason === 'no_code') {
+        message += 'No verification code provided.';
+      } else if (reason?.includes('expired') || reason?.includes('already been used')) {
+        message += 'This link has expired or has already been used. Please request a new verification email.';
+      } else if (reason === 'no_user') {
+        message += 'Unable to verify your account.';
+      } else {
+        message += 'Please try again or request a new verification email.';
+      }
+      
+      toast.error(message);
+      
+      // Clean up URL by removing error parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('error');
+      newUrl.searchParams.delete('reason');
+      router.replace(newUrl.pathname + newUrl.search);
+    }
+  }, [searchParams, router]);
 
   // Open sidebar by default on desktop only
   useEffect(() => {

@@ -15,13 +15,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user in Prisma database
-    const dbUser = await prisma.user.findUnique({
+    // Find or create user in Prisma database
+    let dbUser = await prisma.user.findUnique({
       where: { supabaseId: user.id },
     })
 
     if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      // Create user if doesn't exist (e.g., after email verification)
+      dbUser = await prisma.user.create({
+        data: {
+          supabaseId: user.id,
+          email: user.email || '',
+          firstName: user.user_metadata?.first_name || null,
+        },
+      })
     }
 
     // Fetch all campaigns for this user

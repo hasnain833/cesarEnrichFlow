@@ -49,14 +49,27 @@ export function CampaignsSidebar({
     setIsLoading(true);
     try {
       const response = await fetch("/api/campaigns");
+      
       if (!response.ok) {
-        throw new Error("Failed to fetch campaigns");
+        // Handle different error statuses
+        if (response.status === 401) {
+          // User not authenticated - clear campaigns
+          setCampaigns([]);
+          return;
+        }
+        
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch campaigns");
       }
+      
       const { campaigns: fetchedCampaigns } = await response.json();
       setCampaigns(fetchedCampaigns || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading campaigns:", error);
-      toast.error("Failed to load campaigns.");
+      // Only show toast for unexpected errors, not for empty results
+      if (error.message && !error.message.includes("Failed to fetch")) {
+        toast.error(error.message || "Failed to load campaigns.");
+      }
       setCampaigns([]);
     } finally {
       setIsLoading(false);
