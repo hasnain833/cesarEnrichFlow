@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,15 +20,7 @@ export function CampaignTable({ campaignId }: CampaignTableProps) {
   const [data, setData] = useState<CampaignData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (campaignId) {
-      loadCampaignData();
-    } else {
-      setData([]);
-    }
-  }, [campaignId]);
-
-  const loadCampaignData = async () => {
+  const loadCampaignData = useCallback(async () => {
     if (!campaignId) return;
 
     setIsLoading(true);
@@ -51,7 +43,15 @@ export function CampaignTable({ campaignId }: CampaignTableProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [campaignId]);
+
+  useEffect(() => {
+    if (campaignId) {
+      loadCampaignData();
+    } else {
+      setData([]);
+    }
+  }, [campaignId, loadCampaignData]);
 
   if (!campaignId) {
     return (

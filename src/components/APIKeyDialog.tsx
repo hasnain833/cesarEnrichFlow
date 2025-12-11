@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,16 +39,7 @@ export function APIKeyDialog({
   const [originalKey, setOriginalKey] = useState("");
   const supabase = createClient();
 
-  // Load existing API key when dialog opens
-  useEffect(() => {
-    if (open && user) {
-      loadExistingKey();
-    } else {
-      setApiKey("");
-    }
-  }, [open, user]);
-
-  const loadExistingKey = async () => {
+  const loadExistingKey = useCallback(async () => {
     if (!user) return;
 
     setIsLoadingExisting(true);
@@ -99,7 +90,16 @@ export function APIKeyDialog({
     } finally {
       setIsLoadingExisting(false);
     }
-  };
+  }, [user, apiName]);
+
+  // Load existing API key when dialog opens
+  useEffect(() => {
+    if (open && user) {
+      loadExistingKey();
+    } else {
+      setApiKey("");
+    }
+  }, [open, user, loadExistingKey]);
 
   const handleSave = async () => {
     if (!user) {

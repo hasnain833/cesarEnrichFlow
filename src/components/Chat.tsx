@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useTheme } from "next-themes";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Plus, ArrowUp, Share, Sun, Moon, Check, Menu, X } from "lucide-react";
@@ -29,36 +29,11 @@ const tabs = [
 ];
 const suggestionCards = [];
 
-export const Chat = () => {
-  const [activeTab, setActiveTab] = useState("Shadcn");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [selectedApi, setSelectedApi] = useState<string | null>(null);
-  const [isApiDialogOpen, setIsApiDialogOpen] = useState(false);
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [savedApiKeys, setSavedApiKeys] = useState<Set<string>>(new Set());
-  const [hasAtLeastOneApiKey, setHasAtLeastOneApiKey] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [inputError, setInputError] = useState("");
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
-    null
-  );
-  const [campaignsRefreshTrigger, setCampaignsRefreshTrigger] = useState(0);
-  const [campaignName, setCampaignName] = useState<string>("");
-
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const supabase = createClient();
+// Component to handle email verification errors (uses useSearchParams)
+function EmailVerificationHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Handle email verification errors
   useEffect(() => {
     const error = searchParams.get('error');
     const reason = searchParams.get('reason');
@@ -85,6 +60,36 @@ export const Chat = () => {
       router.replace(newUrl.pathname + newUrl.search);
     }
   }, [searchParams, router]);
+
+  return null;
+}
+
+function ChatContent() {
+  const [activeTab, setActiveTab] = useState("Shadcn");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedApi, setSelectedApi] = useState<string | null>(null);
+  const [isApiDialogOpen, setIsApiDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [savedApiKeys, setSavedApiKeys] = useState<Set<string>>(new Set());
+  const [hasAtLeastOneApiKey, setHasAtLeastOneApiKey] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [inputError, setInputError] = useState("");
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
+    null
+  );
+  const [campaignsRefreshTrigger, setCampaignsRefreshTrigger] = useState(0);
+  const [campaignName, setCampaignName] = useState<string>("");
+
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const supabase = createClient();
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Open sidebar by default on desktop only
   useEffect(() => {
@@ -754,5 +759,15 @@ export const Chat = () => {
         onAuthSuccess={handleAuthSuccess}
       />
     </section>
+  );
+}
+
+// Export Chat component wrapped in Suspense for useSearchParams
+export const Chat = () => {
+  return (
+    <Suspense fallback={null}>
+      <EmailVerificationHandler />
+      <ChatContent />
+    </Suspense>
   );
 };

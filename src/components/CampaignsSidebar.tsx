@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -34,16 +34,7 @@ export function CampaignsSidebar({
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      loadCampaigns();
-    } else {
-      setCampaigns([]);
-      setIsLoading(false);
-    }
-  }, [user, refreshTrigger]);
-
-  const loadCampaigns = async () => {
+  const loadCampaigns = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
@@ -74,7 +65,16 @@ export function CampaignsSidebar({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadCampaigns();
+    } else {
+      setCampaigns([]);
+      setIsLoading(false);
+    }
+  }, [user, refreshTrigger, loadCampaigns]);
 
   return (
     <div className="flex flex-col h-full bg-muted/30">
