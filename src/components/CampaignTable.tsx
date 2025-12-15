@@ -70,9 +70,9 @@ export function CampaignTable({ campaignId, onRefresh }: CampaignTableProps) {
       const { campaign } = await response.json();
       const contactsCount = campaign.contacts?.length || 0;
       // Count contacts as processed if they have enrichment data (email, name, company, etc.)
-      const completedContacts = campaign.contacts?.filter((c: Contact) => 
-        c.status === 'completed' || 
-        c.emailVerified || 
+      const completedContacts = campaign.contacts?.filter((c: Contact) =>
+        c.status === 'completed' ||
+        c.emailVerified ||
         (c.email && c.email !== 'N/A') ||
         (c.firstName || c.lastName) ||
         c.company
@@ -132,10 +132,10 @@ export function CampaignTable({ campaignId, onRefresh }: CampaignTableProps) {
 
     const status = campaignInfo.status;
     const progress = campaignInfo.progress;
-    const shouldPoll = status === 'processing' || 
-                       (progress && 
-                        progress.total > 0 &&
-                        progress.processed < progress.total);
+    const shouldPoll = status === 'processing' ||
+      (progress &&
+        progress.total > 0 &&
+        progress.processed < progress.total);
 
     if (!shouldPoll) {
       return;
@@ -210,19 +210,12 @@ export function CampaignTable({ campaignId, onRefresh }: CampaignTableProps) {
     );
   }
 
-  const progressPercentage = campaignInfo?.progress && campaignInfo.progress.total > 0
-    ? Math.round((campaignInfo.progress.processed / campaignInfo.progress.total) * 100)
-    : 0;
+ 
+  const showProgressBar = campaignInfo?.status === "processing" &&
+    campaignInfo?.progress &&
+    campaignInfo.progress.total > 0;
 
-  const showProgressBar = campaignInfo?.status === "processing" && 
-                          campaignInfo?.progress && 
-                          campaignInfo.progress.total > 0;
-
-  const isComplete = campaignInfo?.status === 'completed' || 
-                     (campaignInfo?.progress && 
-                      campaignInfo.progress.total > 0 &&
-                      campaignInfo.progress.processed >= campaignInfo.progress.total);
-
+  
   const shouldShowTable = data.length > 0;
 
   const availableColumns = shouldShowTable ? getAvailableColumns() : [];
@@ -231,7 +224,7 @@ export function CampaignTable({ campaignId, onRefresh }: CampaignTableProps) {
     if (columnKey === 'name') {
       return [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'N/A';
     }
-    
+
     if (columnKey === 'status') {
       const status = contact.status || 'pending';
       return (
@@ -260,22 +253,23 @@ export function CampaignTable({ campaignId, onRefresh }: CampaignTableProps) {
       {showProgressBar && campaignInfo?.progress ? (
         <div className="p-4 border-b border-border bg-muted/30">
           <div className="w-full max-w-2xl mx-auto">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground">
-                  Enriching contacts...
-                </p>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <p className="text-sm font-medium text-foreground">
+                    Enriching contacts...
+                  </p>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  {campaignInfo.progress.processed} / {campaignInfo.progress.total}
+                  {campaignInfo.progress.total} contacts processed
                 </p>
               </div>
-              <Progress value={progressPercentage} className="h-2" />
-              
             </div>
           </div>
         </div>
       ) : null}
-      
+
       {shouldShowTable ? (
         <div className="flex-1 flex flex-col overflow-hidden max-w-full">
           <div className="flex-1 overflow-x-scroll">
