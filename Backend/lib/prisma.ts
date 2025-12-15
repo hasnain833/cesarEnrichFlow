@@ -12,11 +12,10 @@ if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is not set')
 }
 
-// Configure pool with SSL for Supabase/cloud databases
 const pool = new Pool({
   connectionString,
   ssl: {
-    rejectUnauthorized: false, // Required for Supabase and most cloud providers
+    rejectUnauthorized: false,
   },
 })
 const adapter = new PrismaPg(pool)
@@ -26,8 +25,8 @@ export const prisma =
   new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' 
-      ? ['error', 'warn'] // Only log errors and warnings in development
-      : ['error'], // Only log errors in production
+      ? ['error', 'warn'] 
+      : ['error'],
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useTheme } from "next-themes";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Plus, ArrowUp, Share, Sun, Moon, Check, Menu, X } from "lucide-react";
+import { Plus, ArrowUp, Sun, Moon, Check, Menu, X, Loader2, Download } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Ripple } from "@/components/ui/ripple";
 import { AccountDropdown } from "@/components/AccountDropdown";
@@ -11,6 +11,7 @@ import { APIKeyDialog } from "@/components/APIKeyDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import { CampaignsSidebar } from "@/components/CampaignsSidebar";
 import { CampaignTable } from "@/components/CampaignTable";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import logo from "../../public/logo.png";
@@ -27,6 +28,18 @@ const tabs = [
   "MailVerify",
   "Enrichly",
 ];
+
+// Required API keys (all must be set)
+const requiredApiKeys = [
+  "Apollo API",
+  "LeadMagic",
+  "IcyPeas",
+  "TryKitt",
+  "A-Leads",
+];
+
+// Optional API keys (user must have at least one, but can have both)
+const optionalApiKeys = ["MailVerify", "Enrichly"];
 const suggestionCards = [];
 
 // Component to handle email verification errors (uses useSearchParams)
@@ -73,7 +86,7 @@ function ChatContent() {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [savedApiKeys, setSavedApiKeys] = useState<Set<string>>(new Set());
-  const [hasAtLeastOneApiKey, setHasAtLeastOneApiKey] = useState(false);
+  const [hasAllApiKeys, setHasAllApiKeys] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [inputError, setInputError] = useState("");
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
@@ -81,6 +94,13 @@ function ChatContent() {
   );
   const [campaignsRefreshTrigger, setCampaignsRefreshTrigger] = useState(0);
   const [campaignName, setCampaignName] = useState<string>("");
+  const [campaignInfo, setCampaignInfo] = useState<{
+    id: string;
+    name: string;
+    status: string;
+    progress?: { total: number; processed: number };
+  } | null>(null);
+  const [campaignContacts, setCampaignContacts] = useState<any[]>([]);
 
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -101,12 +121,10 @@ function ChatContent() {
     };
 
     checkDesktop();
-    // Optional: handle window resize if needed
     window.addEventListener("resize", checkDesktop);
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
 
-  // Get user and load saved API keys
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -123,39 +141,197 @@ function ChatContent() {
         await loadSavedApiKeys(session.user);
       } else {
         setSavedApiKeys(new Set());
-        setHasAtLeastOneApiKey(false);
+        setHasAllApiKeys(false);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  // Load campaign name when campaign is selected
   useEffect(() => {
-    const loadCampaignName = async () => {
+    const loadCampaignInfo = async () => {
       if (!selectedCampaignId) {
-        setCampaignName("");
-        return;
-      }
+          setCampaignName("");
+          setCampaignInfo(null);
+          setCampaignContacts([]);
+          return;
+        }
 
       try {
         const response = await fetch(`/api/campaigns/${selectedCampaignId}`);
         if (response.ok) {
           const { campaign } = await response.json();
           setCampaignName(campaign.name || "");
+          const contacts = campaign.contacts || [];
+          setCampaignContacts(contacts);
+          const contactsCount = contacts.length || 0;
+          const completedContacts = contacts.filter((c: any) => 
+            c.status === 'completed' || 
+            c.emailVerified || 
+            (c.email && c.email !== 'N/A') ||
+            (c.firstName || c.lastName) ||
+            c.company
+          ).length || 0;
+          setCampaignInfo({
+            id: campaign.id,
+            name: campaign.name,
+            status: campaign.status,
+            progress: contactsCount > 0 ? {
+              total: contactsCount,
+              processed: completedContacts,
+            } : undefined,
+          });
         }
       } catch (error) {
-        console.error("Error loading campaign name:", error);
+        console.error("Error loading campaign info:", error);
         setCampaignName("");
+        setCampaignInfo(null);
+        setCampaignContacts([]);
       }
     };
 
-    loadCampaignName();
-  }, [selectedCampaignId]);
+    loadCampaignInfo();
+  }, [selectedCampaignId, campaignsRefreshTrigger]);
+
+  useEffect(() => {
+    if (!selectedCampaignId || !campaignInfo) {
+      return;
+    }
+
+    const status = campaignInfo.status;
+    const progress = campaignInfo.progress;
+    const shouldPoll = status === 'processing' || 
+                       (progress && 
+                        progress.total > 0 &&
+                        progress.processed < progress.total);
+
+    if (!shouldPoll) {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/campaigns/${selectedCampaignId}`);
+        if (response.ok) {
+          const { campaign } = await response.json();
+          const contacts = campaign.contacts || [];
+          setCampaignContacts(contacts);
+          const contactsCount = contacts.length || 0;
+          const completedContacts = contacts.filter((c: any) => 
+            c.status === 'completed' || 
+            c.emailVerified || 
+            (c.email && c.email !== 'N/A') ||
+            (c.firstName || c.lastName) ||
+            c.company
+          ).length || 0;
+          
+          setCampaignInfo({
+            id: campaign.id,
+            name: campaign.name,
+            status: campaign.status,
+            progress: contactsCount > 0 ? {
+              total: contactsCount,
+              processed: completedContacts,
+            } : undefined,
+          });
+        }
+      } catch (error) {
+        console.error("Error polling campaign status:", error);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [selectedCampaignId, campaignInfo]);
+
+  const handleExportCSV = () => {
+    if (campaignContacts.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const columnMap: Record<string, { label: string; key: string }> = {
+      name: { label: 'Name', key: 'name' },
+      email: { label: 'Email', key: 'email' },
+      title: { label: 'Title', key: 'title' },
+      company: { label: 'Company', key: 'company' },
+      companyDomain: { label: 'Company Domain', key: 'companyDomain' },
+      phone: { label: 'Phone', key: 'phone' },
+      linkedinUrl: { label: 'LinkedIn', key: 'linkedinUrl' },
+      city: { label: 'City', key: 'city' },
+      state: { label: 'State', key: 'state' },
+      country: { label: 'Country', key: 'country' },
+      status: { label: 'Status', key: 'status' },
+      enrichedBy: { label: 'Source', key: 'enrichedBy' },
+      emailVerified: { label: 'Email Verified', key: 'emailVerified' },
+      emailVerificationStatus: { label: 'Verification Status', key: 'emailVerificationStatus' },
+    };
+
+    const availableColumns = Object.entries(columnMap).filter(([_, config]) => {
+      return campaignContacts.some((contact: any) => {
+        const value = contact[config.key];
+        return value !== null && value !== undefined && value !== '';
+      });
+    });
+
+    const alwaysInclude = ['name', 'email'];
+    const included = new Set(availableColumns.map(([key]) => key));
+    alwaysInclude.forEach(key => {
+      if (!included.has(key) && columnMap[key]) {
+        availableColumns.unshift([key, columnMap[key]]);
+      }
+    });
+
+    const columns = availableColumns.map(([key, config]) => ({ key, ...config }));
+
+    if (columns.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const getCSVValue = (contact: any, columnKey: string): string => {
+      if (columnKey === 'name') {
+        return [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'N/A';
+      }
+      
+      if (columnKey === 'emailVerified') {
+        return contact.emailVerified ? 'Yes' : 'No';
+      }
+
+      const value = contact[columnKey];
+      if (value === null || value === undefined || value === '') {
+        return 'N/A';
+      }
+      return String(value);
+    };
+
+    const headers = columns.map(col => col.label);
+    
+    const rows = campaignContacts.map((contact: any) => 
+      columns.map(col => getCSVValue(contact, col.key))
+    );
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${campaignInfo?.name || 'campaign'}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('CSV exported successfully');
+  };
 
   const loadSavedApiKeys = async (currentUser: SupabaseUser) => {
     try {
-      // Load API keys from Prisma backend
       const response = await fetch("/api/integrations");
       if (response.ok) {
         const data = await response.json();
@@ -165,21 +341,24 @@ function ChatContent() {
             .map((integration: any) => integration.serviceName)
         );
         setSavedApiKeys(saved);
-        setHasAtLeastOneApiKey(saved.size > 0);
+        
+        const hasAllRequired = requiredApiKeys.every(key => saved.has(key));
+        const hasOneOptional = optionalApiKeys.some(key => saved.has(key));
+        
+        setHasAllApiKeys(hasAllRequired && hasOneOptional);
       } else {
         setSavedApiKeys(new Set());
-        setHasAtLeastOneApiKey(false);
+        setHasAllApiKeys(false);
       }
     } catch (error) {
       console.error("Error loading API keys:", error);
       setSavedApiKeys(new Set());
-      setHasAtLeastOneApiKey(false);
+      setHasAllApiKeys(false);
     }
   };
 
   const handleTabClick = (tab: string) => {
     if (!user) {
-      // Show login prompt
       toast.info("Please log in to configure API keys", {
         description: "You need to be logged in to add or manage API keys.",
         action: {
@@ -194,7 +373,6 @@ function ChatContent() {
   };
 
   const handleAuthSuccess = async () => {
-    // Reload user data after successful login
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -206,7 +384,6 @@ function ChatContent() {
 
   const handleInputClick = () => {
     if (!user) {
-      // User not logged in
       toast.info("Please log in to use the chat", {
         description: "You need to be logged in to send messages.",
         action: {
@@ -218,11 +395,19 @@ function ChatContent() {
       return;
     }
 
-    if (!hasAtLeastOneApiKey) {
-      // User logged in but no API keys
-      toast.info("Add an API key to use the chat", {
-        description:
-          "You need to add at least one API key to send messages. Click on any tab above to add your API key.",
+    if (!hasAllApiKeys) {
+      const missingRequired = requiredApiKeys.filter(key => !savedApiKeys.has(key));
+      const hasOptional = optionalApiKeys.some(key => savedApiKeys.has(key));
+      
+      let description = "";
+      if (missingRequired.length > 0) {
+        description = `You need to add all required API keys. Missing: ${missingRequired.join(", ")}.`;
+      } else if (!hasOptional) {
+        description = `You need to add at least one of the optional API keys: ${optionalApiKeys.join(" or ")}. You can add both if you have them.`;
+      }
+      
+      toast.info("Add all required API keys to use the chat", {
+        description: description + " Click on the tabs above to add your API keys.",
         action: {
           label: "Add API Key",
           onClick: () => {
@@ -244,7 +429,7 @@ function ChatContent() {
     if (session?.user) {
       await loadSavedApiKeys(session.user);
     } else {
-      setHasAtLeastOneApiKey(false);
+      setHasAllApiKeys(false);
       setSavedApiKeys(new Set());
     }
   };
@@ -255,24 +440,21 @@ function ChatContent() {
       return false;
     }
 
-    // Check if URL starts with https://api.apollo.io/
-    if (!url.trim().startsWith("https://api.apollo.io/")) {
-      setInputError("URL must start with https://api.apollo.io/");
+    if (!url.trim().startsWith("https://app.apollo.io/")) {
+      setInputError("URL must start with https://app.apollo.io/");
       return false;
     }
 
     try {
       const urlObj = new URL(url);
 
-      // Check if it's HTTPS
       if (urlObj.protocol !== "https:") {
         setInputError("URL must use HTTPS protocol");
         return false;
       }
 
-      // Verify the hostname is exactly api.apollo.io
-      if (urlObj.hostname.toLowerCase() !== "api.apollo.io") {
-        setInputError("URL must start with https://api.apollo.io/");
+      if (urlObj.hostname.toLowerCase() !== "app.apollo.io") {
+        setInputError("URL must start with https://app.apollo.io/");
         return false;
       }
 
@@ -280,7 +462,7 @@ function ChatContent() {
       return true;
     } catch (error) {
       setInputError(
-        "Please enter a valid URL starting with https://api.apollo.io/"
+        "Please enter a valid URL starting with https://app.apollo.io/"
       );
       return false;
     }
@@ -290,7 +472,6 @@ function ChatContent() {
     const value = e.target.value;
     setInputValue(value);
 
-    // Validate as user types
     if (value.trim()) {
       validateUrl(value);
     } else {
@@ -299,7 +480,7 @@ function ChatContent() {
   };
 
   const handleSubmit = async () => {
-    if (!user || !hasAtLeastOneApiKey) {
+    if (!user || !hasAllApiKeys) {
       handleInputClick();
       return;
     }
@@ -314,7 +495,6 @@ function ChatContent() {
       return;
     }
 
-    // Create campaign with the URL
     try {
       const response = await fetch("/api/campaigns", {
         method: "POST",
@@ -332,15 +512,23 @@ function ChatContent() {
       }
 
       const { campaign } = await response.json();
-      toast.success("Campaign created successfully!");
+      
+      if (campaign.status === 'processing') {
+        toast.success("Campaign created and enrichment started!", {
+          description: "Your campaign is being processed. Check the progress below.",
+        });
+      } else if (campaign.warning) {
+        toast.warning("Campaign created", {
+          description: campaign.warning,
+        });
+      } else {
+        toast.success("Campaign created successfully!");
+      }
 
-      // Refresh campaigns list
       setCampaignsRefreshTrigger((prev) => prev + 1);
 
-      // Automatically select the newly created campaign
       setSelectedCampaignId(campaign.id);
 
-      // Clear input
       setInputValue("");
       setInputError("");
     } catch (error: any) {
@@ -614,10 +802,9 @@ function ChatContent() {
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-h-[calc(100vh-6rem)]">
-              {/* Chat Header */}
+              {/* Chat Header - Sidebar Toggle and Campaign Info */}
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
-                  {/* Sidebar Toggle Button */}
                   <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                     className="text-muted-foreground hover:text-foreground transition-colors"
@@ -640,20 +827,52 @@ function ChatContent() {
                       <path d="M9 3v18"></path>
                     </svg>
                   </button>
-                  {selectedCampaignId && campaignName && (
+                  {campaignInfo && (
                     <h2 className="text-lg font-semibold text-foreground">
-                      {campaignName}
+                      {campaignInfo.name}
                     </h2>
                   )}
                 </div>
-                <button className="text-muted-foreground hover:text-foreground">
-                  <Share className="w-4 h-4" />
-                </button>
+                {campaignInfo && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
+                        campaignInfo.status === "completed"
+                          ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                          : campaignInfo.status === "processing"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            : campaignInfo.status === "failed"
+                              ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                              : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                      )}>
+                      {campaignInfo.status === "processing" && (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      )}
+                      {campaignInfo.status.charAt(0).toUpperCase() + campaignInfo.status.slice(1)}
+                    </span>
+                    
+                    {campaignContacts.length > 0 && (
+                      <Button
+                        onClick={handleExportCSV}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Export
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Chat Content */}
               {selectedCampaignId ? (
-                <CampaignTable campaignId={selectedCampaignId} />
+                <CampaignTable 
+                  campaignId={selectedCampaignId}
+                  onRefresh={() => setCampaignsRefreshTrigger((prev) => prev + 1)}
+                />
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 relative">
                   <Ripple />
@@ -701,7 +920,7 @@ function ChatContent() {
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         className="w-full bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-sm cursor-text"
-                        readOnly={!user || !hasAtLeastOneApiKey}
+                        readOnly={!user || !hasAllApiKeys}
                       />
                     </div>
                     {inputError && (
@@ -712,14 +931,14 @@ function ChatContent() {
                     <div className="flex items-center justify-between gap-2">
                       <button
                         className="text-muted-foreground hover:text-foreground transition-colors"
-                        disabled={!user || !hasAtLeastOneApiKey}>
+                        disabled={!user || !hasAllApiKeys}>
                         <Plus className="w-5 h-5" />
                       </button>
                       <button
                         onClick={handleSubmit}
                         disabled={
                           !user ||
-                          !hasAtLeastOneApiKey ||
+                          !hasAllApiKeys ||
                           !inputValue.trim() ||
                           !!inputError
                         }
