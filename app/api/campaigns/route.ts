@@ -79,6 +79,17 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    const isSubscribed =
+      dbUser.stripeSubscriptionId &&
+      (dbUser.stripeSubscriptionStatus === 'active' || dbUser.stripeSubscriptionStatus === 'trialing');
+
+    if (!isSubscribed) {
+      return NextResponse.json(
+        { error: 'Subscription required' },
+        { status: 403 }
+      );
+    }
+
     const campaignsCount = await prisma.campaign.count({
       where: { userId: dbUser.id },
     })
@@ -142,7 +153,7 @@ export async function POST(request: NextRequest) {
         method: "POST",
         headers,
         body: JSON.stringify({
-          campaignId: String(campaign.id), 
+          campaignId: String(campaign.id),
           userId: String(dbUser.id),
           apolloUrl: campaign.url
         }),

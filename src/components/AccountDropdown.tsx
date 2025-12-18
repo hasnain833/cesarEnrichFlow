@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AuthDialog } from "@/components/AuthDialog";
 import { ProfileDialog } from "@/components/ProfileDialog";
+import { PricingDialog } from "@/components/PricingDialog";
 import { createClient } from "@/lib/supabase/client";
 import { User, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ export function AccountDropdown() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [isPricingDialogOpen, setIsPricingDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -130,6 +132,9 @@ export function AccountDropdown() {
             <DropdownMenuItem onClick={() => setIsProfileDialogOpen(true)}>
               Profile
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsPricingDialogOpen(true)}>
+              Subscription
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive">
@@ -139,12 +144,18 @@ export function AccountDropdown() {
         </DropdownMenuContent>
       </DropdownMenu>
       {user && (
-        <ProfileDialog
-          open={isProfileDialogOpen}
-          onOpenChange={setIsProfileDialogOpen}
-          user={user}
-          onUpdate={handleProfileUpdate}
-        />
+        <>
+          <ProfileDialog
+            open={isProfileDialogOpen}
+            onOpenChange={setIsProfileDialogOpen}
+            user={user}
+            onUpdate={handleProfileUpdate}
+          />
+          <PricingDialog
+            open={isPricingDialogOpen}
+            onOpenChange={setIsPricingDialogOpen}
+          />
+        </>
       )}
     </>
   );

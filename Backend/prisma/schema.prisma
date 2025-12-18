@@ -7,16 +7,21 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  supabaseId   String        @unique
-  email        String        @unique
-  firstName    String?
-  lastName     String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  campaigns    Campaign[]
-  integrations Integration[]
-  contacts     Contact[]
+  id                       String        @id @default(uuid())
+  supabaseId               String        @unique
+  email                    String        @unique
+  firstName                String?
+  lastName                 String?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  stripeCurrentPeriodEnd   DateTime?     @map("stripe_current_period_end")
+  stripeCustomerId         String?       @unique @map("stripe_customer_id")
+  stripePriceId            String?       @map("stripe_price_id")
+  stripeSubscriptionId     String?       @map("stripe_subscription_id")
+  stripeSubscriptionStatus String?       @map("stripe_subscription_status")
+  campaigns                Campaign[]
+  contacts                 Contact[]
+  integrations             Integration[]
 
   @@map("users")
 }
@@ -37,23 +42,23 @@ model Integration {
 }
 
 model Campaign {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
   name      String
   url       String
-  status    String    @default("pending")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   contacts  Contact[]
 
   @@map("campaigns")
 }
 
 model Contact {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  campaignId              String    @map("campaign_id") @db.Uuid
-  userId                  String?  @map("user_id") @db.Uuid
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaignId              String   @map("campaign_id")
+  userId                  String?  @map("user_id")
   firstName               String?  @map("first_name")
   lastName                String?  @map("last_name")
   email                   String?

@@ -210,12 +210,12 @@ export function CampaignTable({ campaignId, onRefresh }: CampaignTableProps) {
     );
   }
 
- 
+
   const showProgressBar = campaignInfo?.status === "processing" &&
     campaignInfo?.progress &&
     campaignInfo.progress.total > 0;
 
-  
+
   const shouldShowTable = data.length > 0;
 
   const availableColumns = shouldShowTable ? getAvailableColumns() : [];
