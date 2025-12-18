@@ -7,7 +7,7 @@ datasource db {
 }
 
 model User {
-  id                       String        @id @default(uuid())
+  id                       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   supabaseId               String        @unique
   email                    String        @unique
   firstName                String?
@@ -27,8 +27,8 @@ model User {
 }
 
 model Integration {
-  id          String   @id @default(uuid())
-  userId      String
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @db.Uuid
   serviceName String
   apiKey      String
   isActive    Boolean  @default(true)
@@ -42,8 +42,8 @@ model Integration {
 }
 
 model Campaign {
-  id        String   @id @default(uuid())
-  userId    String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
   name      String
   url       String
   status    String   @default("pending")
@@ -57,8 +57,8 @@ model Campaign {
 
 model Contact {
   id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  campaignId              String   @map("campaign_id")
-  userId                  String?  @map("user_id")
+  campaignId              String   @map("campaign_id") @db.Uuid
+  userId                  String?  @map("user_id") @db.Uuid
   firstName               String?  @map("first_name")
   lastName                String?  @map("last_name")
   email                   String?

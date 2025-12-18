@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '../../../Backend/lib/prisma'
+import { prisma } from "@/lib/prisma";
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
@@ -14,19 +14,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma.user.upsert({
       where: { supabaseId: user.id },
+      update: {},
+      create: {
+        supabaseId: user.id,
+        email: user.email || '',
+        firstName: user.user_metadata?.first_name || null,
+      },
     })
-
-    if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          supabaseId: user.id,
-          email: user.email || '',
-          firstName: user.user_metadata?.first_name || null,
-        },
-      })
-    }
 
     const campaigns = await prisma.campaign.findMany({
       where: { userId: dbUser.id },
@@ -65,19 +61,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma.user.upsert({
       where: { supabaseId: user.id },
+      update: {},
+      create: {
+        supabaseId: user.id,
+        email: user.email || '',
+        firstName: user.user_metadata?.first_name || null,
+      },
     })
-
-    if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          supabaseId: user.id,
-          email: user.email || '',
-          firstName: user.user_metadata?.first_name || null,
-        },
-      })
-    }
 
     const isSubscribed =
       dbUser.stripeSubscriptionId &&
