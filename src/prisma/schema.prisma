@@ -37,7 +37,6 @@ model Integration {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, serviceName])
-  @@unique([serviceName, apiKey])
   @@map("integrations")
 }
 

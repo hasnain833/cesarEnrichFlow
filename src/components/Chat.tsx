@@ -30,16 +30,13 @@ const tabs = [
   "Enrichly",
 ];
 
-// Required API keys (all must be set)
-const requiredApiKeys = [
-  "Apollo API",
-  "LeadMagic",
-  "IcyPeas",
-  "TryKitt",
-  "A-Leads",
-];
+// Mandatory API keys (must be set)
+const mandatoryApiKeys = ["Apollo API"];
 
-// Optional API keys (user must have at least one, but can have both)
+// One of these must be set
+const leadSourceApiKeys = ["LeadMagic", "IcyPeas", "TryKitt", "A-Leads"];
+
+// Optional API keys (user can have none, one, or both)
 const optionalApiKeys = ["MailVerify", "Enrichly"];
 const suggestionCards = [];
 
@@ -344,10 +341,10 @@ function ChatContent() {
         );
         setSavedApiKeys(saved);
 
-        const hasAllRequired = requiredApiKeys.every(key => saved.has(key));
-        const hasOneOptional = optionalApiKeys.some(key => saved.has(key));
+        const hasMandatory = mandatoryApiKeys.every(key => saved.has(key));
+        const hasClickSource = leadSourceApiKeys.some(key => saved.has(key));
 
-        setHasAllApiKeys(hasAllRequired && hasOneOptional);
+        setHasAllApiKeys(hasMandatory && hasClickSource);
       } else {
         setSavedApiKeys(new Set());
         setHasAllApiKeys(false);
@@ -398,14 +395,27 @@ function ChatContent() {
     }
 
     if (!hasAllApiKeys) {
-      const missingRequired = requiredApiKeys.filter(key => !savedApiKeys.has(key));
-      const hasOptional = optionalApiKeys.some(key => savedApiKeys.has(key));
+      console.log("Validation Debug:", {
+        savedApiKeys: Array.from(savedApiKeys),
+        mandatoryApiKeys,
+        leadSourceApiKeys
+      });
+
+      const missingMandatory = mandatoryApiKeys.filter(key => !savedApiKeys.has(key));
+      const hasLeadSource = leadSourceApiKeys.some(key => savedApiKeys.has(key));
+
+      console.log("Validation Logic:", {
+        missingMandatory,
+        hasLeadSource,
+        missingMandatoryLen: missingMandatory.length
+      });
+
 
       let description = "";
-      if (missingRequired.length > 0) {
-        description = `You need to add all required API keys. Missing: ${missingRequired.join(", ")}.`;
-      } else if (!hasOptional) {
-        description = `You need to add at least one of the optional API keys: ${optionalApiKeys.join(" or ")}. You can add both if you have them.`;
+      if (missingMandatory.length > 0) {
+        description = `You need to add the mandatory API key: ${missingMandatory.join(", ")}.`;
+      } else if (!hasLeadSource) {
+        description = `You need to add at least one lead source API key from: ${leadSourceApiKeys.join(", ")}.`;
       }
 
       toast.info("Add all required API keys to use the chat", {

@@ -78,32 +78,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const existingKey = await prisma.integration.findFirst({
-      where: {
-        apiKey: apiKey,
-        serviceName: serviceName,
-        userId: {
-          not: dbUser.id,
-        },
-      },
-      include: {
-        user: {
-          select: {
-            email: true,
-          },
-        },
-      },
-    })
 
-    if (existingKey) {
-      return NextResponse.json(
-        {
-          error: 'This API key is already in use by another user',
-          details: `The ${serviceName} API key is already registered to another account.`,
-        },
-        { status: 409 }
-      )
-    }
 
     const existing = await prisma.integration.findFirst({
       where: {
