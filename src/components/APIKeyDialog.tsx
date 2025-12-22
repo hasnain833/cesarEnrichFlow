@@ -44,7 +44,6 @@ export function APIKeyDialog({
 
     setIsLoadingExisting(true);
     try {
-      // Load from Prisma backend
       const response = await fetch(
         `/api/integrations/${encodeURIComponent(apiName)}`
       );
@@ -55,7 +54,6 @@ export function APIKeyDialog({
 
         if (existingKey) {
           setOriginalKey(existingKey);
-          // Mask the key for display (show only last 4 characters)
           if (existingKey.length > 4) {
             const masked =
               "•".repeat(existingKey.length - 4) + existingKey.slice(-4);
@@ -73,7 +71,6 @@ export function APIKeyDialog({
           setShowApiKey(false);
         }
       } else if (response.status === 404) {
-        // No integration found, which is fine
         setApiKey("");
         setOriginalKey("");
         setIsMasked(false);
@@ -92,7 +89,6 @@ export function APIKeyDialog({
     }
   }, [user, apiName]);
 
-  // Load existing API key when dialog opens
   useEffect(() => {
     if (open && user) {
       loadExistingKey();
@@ -113,7 +109,6 @@ export function APIKeyDialog({
       return;
     }
 
-    // If the key is masked, don't update it
     if (isMasked) {
       toast.info(
         "API key already saved. Clear the field and enter a new key to update."
@@ -123,7 +118,6 @@ export function APIKeyDialog({
 
     setIsLoading(true);
     try {
-      // Save to Prisma backend
       const response = await fetch("/api/integrations", {
         method: "POST",
         headers: {
@@ -159,7 +153,6 @@ export function APIKeyDialog({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // If current value is masked, clear it to allow new input
     if (isMasked) {
       setApiKey("");
       setIsMasked(false);
@@ -171,18 +164,15 @@ export function APIKeyDialog({
 
   const toggleVisibility = () => {
     if (isMasked && originalKey) {
-      // Show the original key
       setApiKey(originalKey);
       setIsMasked(false);
       setShowApiKey(true);
     } else if (showApiKey && originalKey) {
-      // Hide it back to masked
       const masked = "•".repeat(originalKey.length - 4) + originalKey.slice(-4);
       setApiKey(masked);
       setIsMasked(true);
       setShowApiKey(false);
     } else {
-      // Toggle for new keys
       setShowApiKey(!showApiKey);
     }
   };
@@ -195,7 +185,6 @@ export function APIKeyDialog({
 
     setIsLoading(true);
     try {
-      // Remove from Prisma backend
       const response = await fetch(
         `/api/integrations?serviceName=${encodeURIComponent(apiName)}`,
         {

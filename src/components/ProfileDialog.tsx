@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { Loader2, Edit, X, Eye, EyeOff } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-// Password change schema
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
@@ -33,7 +32,6 @@ const passwordSchema = z
     path: ["confirmPassword"],
   });
 
-// Profile update schema
 const profileSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
 });
@@ -78,7 +76,6 @@ export function ProfileDialog({
     },
   });
 
-  // Reset forms when dialog opens/closes
   useEffect(() => {
     if (open) {
       profileForm.reset({
@@ -111,7 +108,6 @@ export function ProfileDialog({
 
   const handleChangePassword = async (data: PasswordFormData) => {
     try {
-      // First verify current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email!,
         password: data.currentPassword,
@@ -122,7 +118,6 @@ export function ProfileDialog({
         return;
       }
 
-      // Update password
       const { error: updateError } = await supabase.auth.updateUser({
         password: data.newPassword,
       });
@@ -208,7 +203,7 @@ export function ProfileDialog({
                     </div>
                     {showViewPassword && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Password is encrypted for security and cannot be displayed. Use "Change" to update it.
+                        Password is encrypted for security and cannot be displayed. Click "Edit" to update it.
                       </p>
                     )}
                   </div>

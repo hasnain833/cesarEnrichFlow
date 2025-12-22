@@ -21,26 +21,28 @@ import Image from "next/image";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const tabs = [
-  "Apollo API",
-  "LeadMagic",
-  "IcyPeas",
+  "Apollo",
   "TryKitt",
+  "IcyPeas",
+  "LeadMagic",
   "A-Leads",
   "MailVerify",
   "Enrichly",
 ];
+const groupedTabs = ["TryKitt", "IcyPeas", "LeadMagic", "A-Leads"];
+const beforeGroup = tabs.filter(
+  (tab) => !groupedTabs.includes(tab) && tabs.indexOf(tab) < tabs.indexOf("TryKitt")
+);
 
-// Mandatory API keys (must be set)
-const mandatoryApiKeys = ["Apollo API"];
+const afterGroup = tabs.filter(
+  (tab) => !groupedTabs.includes(tab) && tabs.indexOf(tab) > tabs.indexOf("A-Leads")
+);
 
-// One of these must be set
+const mandatoryApiKeys = ["Apollo"];
 const leadSourceApiKeys = ["LeadMagic", "IcyPeas", "TryKitt", "A-Leads"];
-
-// Optional API keys (user can have none, one, or both)
-const optionalApiKeys = ["MailVerify", "Enrichly"];
+// const optionalApiKeys = ["MailVerify", "Enrichly"];
 const suggestionCards = [];
 
-// Component to handle email verification errors (uses useSearchParams)
 function EmailVerificationHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -105,15 +107,12 @@ function ChatContent() {
   const [mounted, setMounted] = useState(false);
   const supabase = createClient();
 
-  // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Open sidebar by default on desktop only
   useEffect(() => {
     const checkDesktop = () => {
-      // md breakpoint in Tailwind is 768px
       if (window.innerWidth >= 768) {
         setIsSidebarOpen(true);
       }
@@ -395,21 +394,8 @@ function ChatContent() {
     }
 
     if (!hasAllApiKeys) {
-      console.log("Validation Debug:", {
-        savedApiKeys: Array.from(savedApiKeys),
-        mandatoryApiKeys,
-        leadSourceApiKeys
-      });
-
       const missingMandatory = mandatoryApiKeys.filter(key => !savedApiKeys.has(key));
       const hasLeadSource = leadSourceApiKeys.some(key => savedApiKeys.has(key));
-
-      console.log("Validation Logic:", {
-        missingMandatory,
-        hasLeadSource,
-        missingMandatoryLen: missingMandatory.length
-      });
-
 
       let description = "";
       if (missingMandatory.length > 0) {
@@ -434,7 +420,6 @@ function ChatContent() {
   };
 
   const handleApiSave = async () => {
-    // Reload API keys from Prisma backend
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -670,8 +655,9 @@ function ChatContent() {
 
           {/* Desktop Tabs */}
           <div className="lg:flex hidden justify-between ">
-            <div className="flex gap-2  overflow-x-auto ">
-              {tabs.map((tab) => {
+            <div className="flex gap-2 overflow-x-auto">
+              {/* Before group */}
+              {beforeGroup.map((tab) => {
                 const hasApiKey = savedApiKeys.has(tab);
                 return (
                   <button
@@ -682,13 +668,57 @@ function ChatContent() {
                       activeTab === tab
                         ? "text-foreground border-b-2 border-foreground bg-accent"
                         : "text-muted-foreground hover:text-foreground"
-                    )}>
+                    )}
+                  >
+                    <span>{tab}</span>
+                    {hasApiKey && <Check className="w-4 h-4 text-green-500" />}
+                  </button>
+                );
+              })}
+
+              {/* Grouped tabs with border (desktop) */}
+              <div className="flex gap-2 px-2 mb-2 mt-2 border-x-2 border-muted-foreground/40">
+                {groupedTabs.map((tab) => {
+                  const hasApiKey = savedApiKeys.has(tab);
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => handleTabClick(tab)}
+                      className={cn(
+                        "px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-accent flex items-center gap-2",
+                        activeTab === tab
+                          ? "text-foreground border-b-2 border-foreground bg-accent"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <span>{tab}</span>
+                      {hasApiKey && <Check className="w-4 h-4 text-green-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* After group */}
+              {afterGroup.map((tab) => {
+                const hasApiKey = savedApiKeys.has(tab);
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => handleTabClick(tab)}
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-accent mb-2 mt-2 flex items-center gap-2",
+                      activeTab === tab
+                        ? "text-foreground border-b-2 border-foreground bg-accent"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
                     <span>{tab}</span>
                     {hasApiKey && <Check className="w-4 h-4 text-green-500" />}
                   </button>
                 );
               })}
             </div>
+
 
             <div className="flex gap-2 items-center">
               <AccountDropdown />
@@ -799,7 +829,6 @@ function ChatContent() {
                           selectedCampaignId={selectedCampaignId}
                           onSelectCampaign={(id) => {
                             setSelectedCampaignId(id);
-                            // Close sidebar on mobile when campaign is selected
                             setIsSidebarOpen(false);
                           }}
                           refreshTrigger={campaignsRefreshTrigger}
@@ -807,7 +836,6 @@ function ChatContent() {
                             setInputValue("");
                             setInputError("");
                             setSelectedCampaignId(null);
-                            // Close sidebar on mobile when creating new campaign
                             setIsSidebarOpen(false);
                           }}
                         />
@@ -895,10 +923,10 @@ function ChatContent() {
                   <div className="flex-1 flex flex-col items-center justify-center p-8 relative">
                     <Ripple />
                     <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-2">
-                      Hello there!
+                      Ready to start enrichment?
                     </h2>
                     <p className="text-muted-foreground text-lg mb-12">
-                      How can I help you today?
+                      Connect your API keys to begin!
                     </p>
 
                     {/* Suggestion Cards */}
@@ -933,7 +961,7 @@ function ChatContent() {
                       <div className="flex items-center gap-3">
                         <input
                           type="url"
-                          placeholder="Send a message..."
+                          placeholder="Paste Search URL here......"
                           value={inputValue}
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
@@ -946,12 +974,7 @@ function ChatContent() {
                           {inputError}
                         </p>
                       )}
-                      <div className="flex items-center justify-between gap-2">
-                        <button
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                          disabled={!user || !hasAllApiKeys}>
-                          <Plus className="w-5 h-5" />
-                        </button>
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={handleSubmit}
                           disabled={
@@ -974,7 +997,7 @@ function ChatContent() {
         {/** Footer */}
         <div className="container mx-auto max-w-6xl">
           <p className="text-muted-foreground text-sm text-center p-[0.65rem]">
-            © 2025 Existantly Inc.
+            © 2025 Existantly
           </p>
         </div>
 
@@ -1000,7 +1023,6 @@ function ChatContent() {
   );
 }
 
-// Export Chat component wrapped in Suspense for useSearchParams
 export const Chat = () => {
   return (
     <Suspense fallback={null}>

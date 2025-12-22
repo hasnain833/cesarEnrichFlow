@@ -18,13 +18,11 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-// Login form schema
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-// Signup form schema
 const signupSchema = z
   .object({
     firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -85,7 +83,6 @@ export function AuthDialog({
 
       if (error) throw error;
 
-      // Update user metadata with first name if available
       if (authData.user) {
         toast.success("Login successful!");
         onAuthSuccess();
@@ -104,7 +101,7 @@ export function AuthDialog({
     try {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const redirectUrl = `${baseUrl}/auth/callback`;
-      
+
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -112,7 +109,6 @@ export function AuthDialog({
           data: {
             first_name: data.firstName,
           },
-          // Use emailRedirectTo to set where ConfirmationURL redirects
           emailRedirectTo: redirectUrl,
         },
       });
@@ -146,7 +142,7 @@ export function AuthDialog({
     try {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const redirectUrl = `${baseUrl}/auth/reset-password`;
-      
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });

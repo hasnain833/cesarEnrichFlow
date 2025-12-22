@@ -9,9 +9,9 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EnrichFlow - AI Assistant Builder",
+  title: "Existantly - Waterfall Enrichment",
   description:
-    "Build and deploy your own AI assistant using ChatGPT with ease. Customize the UX to fit your app's needs.",
+    "Existantly is a powerful tool for enriching your leads with additional information. It helps you to get the most out of your leads and make the most of your time.",
 };
 
 export default function RootLayout({
